@@ -1,0 +1,63 @@
+@echo off
+chcp 65001
+cls
+
+if not exist "D:\FA11" mkdir "D:\FA11"
+
+:menu
+echo ===== MENU TAO SHORTCUT FAST =====
+setlocal enabledelayedexpansion
+set count=1
+
+for /d %%i in ("\\192.168.10.222\Bstorage\IT\external\FAST\*") do (
+    set "folder[!count!]=%%~nxi"
+    echo !count!. %%~nxi
+    set /a count+=1
+)
+set /a lastChoice=count-1
+
+echo !count!. Tao tat ca shortcut
+echo 0. Thoat
+echo ===============================
+
+set /p choice="Nhap lua chon cua ban (0-%count%): "
+
+if "%choice%"=="0" goto end
+if "%choice%"=="%count%" goto all
+
+set "selectedFolder=!folder[%choice%]!"
+call :copyAndCreateShortcut "!selectedFolder!"
+goto menu
+
+:copyAndCreateShortcut
+set "folderName=%~1"
+set "sourcePath=\\192.168.10.222\Bstorage\IT\external\FAST\%folderName%"
+set "destPath=D:\FA11\%folderName%"
+set "shortcutPath=%USERPROFILE%\Desktop\%folderName%.lnk"
+set "exePath=D:\FA11\%folderName%\SmStartup.exe"
+
+if not exist "%destPath%" (
+    echo Dang sao chep thu muc %folderName%...
+    xcopy "%sourcePath%" "%destPath%" /E /I /Y
+    echo Da sao chep xong!
+) else (
+    echo Thu muc %folderName% da ton tai, bo qua buoc sao chep!
+)
+
+echo Dang tao shortcut cho %folderName%...
+powershell -Command "$WS = New-Object -ComObject WScript.Shell; $SC = $WS.CreateShortcut('%shortcutPath%'); $SC.TargetPath = '%exePath%'; $SC.WorkingDirectory = '%destPath%'; $SC.Save()"
+echo Da tao shortcut thanh cong!
+goto :eof
+
+:all
+for /L %%i in (1,1,%lastChoice%) do (
+    call :copyAndCreateShortcut "!folder[%%i]!"
+)
+echo Da tao tat ca shortcut thanh cong!
+pause
+goto menu
+
+:end
+echo Cam on ban da su dung!
+pause
+exit
